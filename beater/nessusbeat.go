@@ -175,7 +175,7 @@ func (bt *Nessusbeat) Run(b *beat.Beat) error {
 					continue
 				}
 				event := common.MapStr{
-					"@timestamp":    common.Time(time.Now()),
+					"timestamp":    common.Time(time.Now()),
 					"type":          b.Info.Name,
 					"plugin_id":     record[0],
 					"cve":           record[1],
