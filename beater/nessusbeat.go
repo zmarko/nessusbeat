@@ -21,6 +21,11 @@ import (
 	"github.com/darvid/nessusbeat/config"
 )
 
+type ScanResult struct {
+	reportCSV []byte
+	reportID string
+}
+
 type Nessusbeat struct {
 	done   chan struct{}
 	config config.Config
@@ -104,7 +109,7 @@ func (bt *Nessusbeat) Run(b *beat.Beat) error {
 	}
 
 	bt.client = b.Publisher.Connect()
-	results := make(chan []byte)
+	results := make(chan ScanResult)
 
 	go func() {
 		for {
@@ -139,7 +144,7 @@ func (bt *Nessusbeat) Run(b *beat.Beat) error {
 						logp.Err(err.Error())
 						continue
 					}
-					results <- csv
+					results <- ScanResult{csv, uuid}
 				}
 			case err := <-watcher.Errors:
 				logp.Err(err.Error())
@@ -152,7 +157,7 @@ func (bt *Nessusbeat) Run(b *beat.Beat) error {
 		case <-bt.done:
 			return nil
 		case result := <-results:
-			r := csv.NewReader(bytes.NewReader(result))
+			r := csv.NewReader(bytes.NewReader(result.reportCSV))
 			_, err := r.Read() // skip header row
 			if err != nil {
 				logp.WTF(err.Error())
@@ -185,6 +190,7 @@ func (bt *Nessusbeat) Run(b *beat.Beat) error {
 					"solution":      record[10],
 					"see_also":      record[11],
 					"plugin_output": record[12],
+					"report_id":     result.reportID,
 				}
 				timestampFields := strings.Split(bt.config.TimestampFields, ",")
 				for _, field := range timestampFields {
