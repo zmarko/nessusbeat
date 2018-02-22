@@ -167,3 +167,5 @@
       type: text
     - name: plugin_output
       type: text
+    - name: report_id
+      type: text
